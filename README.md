@@ -1,5 +1,5 @@
-# Arduino-esp32-aws-iot
-Arduini ESP32 library for AWS IoT
+# Arduino-LinkIt7697-aws-iot
+This library forked from Arduino ESP32 library for AWS IoT
 
 Please make sure you have read the [getting started guide](https://aws.amazon.com/iot/getting-started/) before trying to do anyting with this template.
 
