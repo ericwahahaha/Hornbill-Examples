@@ -26,9 +26,11 @@ extern "C" {
 #include <limits.h>
 
 #include "timer_platform.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_log.h"
+#include <FreeRTOS.h>
+#include <task.h>
+//#include "esp_log.h"
+
+#include "log_dump.h"
 
 const static char *TAG = "aws_timer";
 
@@ -67,7 +69,7 @@ uint32_t left_ms(Timer *timer) {
 
 void countdown_sec(Timer *timer, uint32_t timeout) {
     if (timeout > UINT32_MAX / 1000) {
-        ESP_LOGE(TAG, "timeout is out of range: %ds", timeout);
+        pr_debug("timeout is out of range: %ds", timeout);
     }
     countdown_ms(timer, timeout * 1000);
 }

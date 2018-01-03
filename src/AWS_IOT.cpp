@@ -40,15 +40,18 @@ and that both those copyright notices and this permission notice appear in suppo
 #include "aws_iot_mqtt_client_interface.h"
 
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_system.h"
+#include "log_dump.h"
+
+
+#include <FreeRTOS.h>
+#include <task.h>
+#include <event_groups.h>
+/*#include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event_loop.h"
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
-#include "driver/sdmmc_host.h"
+#include "driver/sdmmc_host.h"*/
 
 
  
@@ -88,7 +91,7 @@ void iot_subscribe_callback_handler(AWS_IoT_Client *pClient, char *topicName, ui
 
 void disconnectCallbackHandler(AWS_IoT_Client *pClient, void *data)
 {
-    ESP_LOGW(TAG, "MQTT Disconnect");
+    pr_debug("MQTT Disconnect");
     IoT_Error_t rc = FAILURE;
 
     if(NULL == pClient) 
@@ -97,17 +100,17 @@ void disconnectCallbackHandler(AWS_IoT_Client *pClient, void *data)
     }
 
     if(aws_iot_is_autoreconnect_enabled(pClient)) {
-        ESP_LOGI(TAG, "Auto Reconnect is enabled, Reconnecting attempt will start now");
+        pr_debug("Auto Reconnect is enabled, Reconnecting attempt will start now");
     } 
     else
     {
-        ESP_LOGW(TAG, "Auto Reconnect not enabled. Starting manual reconnect...");
+        pr_debug("Auto Reconnect not enabled. Starting manual reconnect...");
       //  rc = aws_iot_mqtt_attempt_reconnect(pClient);
         if(NETWORK_RECONNECTED == rc) {
-            ESP_LOGW(TAG, "Manual Reconnect Successful");
+            pr_debug("Manual Reconnect Successful");
         } 
         else {
-            ESP_LOGW(TAG, "Manual Reconnect Failed - %d", rc);
+            pr_debug("Manual Reconnect Failed - %d", rc);
         }
     }
 }
@@ -125,7 +128,7 @@ int AWS_IOT::connect(char *hostAddress, char *clientID)
     IoT_Client_Connect_Params connectParams = iotClientConnectParamsDefault;
     
 
-    ESP_LOGI(TAG, "AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
+    pr_debug("AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
 
     mqttInitParams.enableAutoReconnect = false; // We enable this later below
     mqttInitParams.pHostURL = AWS_IOT_HOST_ADDRESS;
@@ -147,7 +150,7 @@ int AWS_IOT::connect(char *hostAddress, char *clientID)
     rc = aws_iot_mqtt_init(&client, &mqttInitParams);
    
     if(SUCCESS != rc) {
-        ESP_LOGE(TAG, "aws_iot_mqtt_init returned error : %d ", rc);
+        pr_debug("aws_iot_mqtt_init returned error : %d ", rc);
         return rc; //abort();
     }
 
@@ -159,13 +162,13 @@ int AWS_IOT::connect(char *hostAddress, char *clientID)
     connectParams.clientIDLen = (uint16_t) strlen(clientID);
     connectParams.isWillMsgPresent = false;
 
-    ESP_LOGI(TAG, "Connecting to AWS...");
+    pr_debug("Connecting to AWS...");
     
     do {
         rc = aws_iot_mqtt_connect(&client, &connectParams);
         
         if(SUCCESS != rc) {
-            ESP_LOGE(TAG, "Error(%d) connecting to %s:%d, \n\rTrying to reconnect", rc, mqttInitParams.pHostURL, mqttInitParams.port);
+            pr_debug("Error(%d) connecting to %s:%d, \n\rTrying to reconnect", rc, mqttInitParams.pHostURL, mqttInitParams.port);
             
         }
         
@@ -184,7 +187,9 @@ int AWS_IOT::connect(char *hostAddress, char *clientID)
     } */   
     
     if(rc == SUCCESS)
-    xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", stack_size, NULL, 5, NULL, 1);
+//    xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", stack_size, NULL, 5, NULL, 1);
+    xTaskCreate(&aws_iot_task, "aws_iot_task", stack_size, NULL, 5, NULL);
+//    xTaskCreate(arduino_task, "arduino_task", 2048, NULL, 1, NULL);
 
     return rc;
 }
@@ -212,13 +217,13 @@ int AWS_IOT::subscribe(char *subTopic, pSubCallBackHandler_t pSubCallBackHandler
     
     subApplCallBackHandler = pSubCallBackHandler;
 
-    ESP_LOGI(TAG, "Subscribing...");
+    pr_debug("Subscribing...");
     rc = aws_iot_mqtt_subscribe(&client, subTopic, strlen(subTopic), QOS0, iot_subscribe_callback_handler, NULL);
     if(SUCCESS != rc) {
-        ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+        pr_debug("Error subscribing : %d ", rc);
         return rc;
     }
-    ESP_LOGI(TAG, "Subscribing... Successful");
+    pr_debug("Subscribing... Successful");
     
     return rc;
 }

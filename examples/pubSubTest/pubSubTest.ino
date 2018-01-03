@@ -1,5 +1,7 @@
 #include <AWS_IOT.h>
-#include <WiFi.h>
+#include <LWiFi.h>
+#include <FreeRTOS.h>
+#include <task.h>
 
 AWS_IOT hornbill;
 
